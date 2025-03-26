@@ -4,3 +4,4 @@ torch
 antspyx
 torchvision
 torchaudio
+monai
