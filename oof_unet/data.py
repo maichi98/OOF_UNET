@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+from torch.utils.data import Sampler
 from oof_unet import constants
 import torch
 import ants
@@ -37,3 +38,17 @@ class OofUniqueMachineDataset(Dataset):
             "mask": torch.tensor(mask).float(),
             "volume": volume
         }
+
+
+class VolumeBasedBatchSampler(Sampler):
+
+    def __init__(self, dataset, max_voxels):
+
+        self.dataset = dataset
+        self.max_voxels = max_voxels
+
+        self.categories = self._group_by_volume()
+
+    def _group_by_volume(self):
+
+        list_dosemaps = self.dataset.list_dosemaps
