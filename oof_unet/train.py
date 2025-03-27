@@ -3,12 +3,13 @@ import pandas as pd
 
 from oof_unet.unet import init_baseline_model
 from oof_unet.data import OofUniqueMachineDataset, VolumeBasedBatchSampler
-from oof_unet.trainer import OofTrainer
+from oof_unet.oof_trainer import OofTrainer
 from torch.utils.data import DataLoader
+from oof_unet import constants
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train UNet model on dosemap data")
+    parser = argparse.ArgumentParser(description="Train UNet model on dosemap csv")
     parser.add_argument("--num_epochs", type=int, default=100,
                         help="Number of training epochs")
     parser.add_argument("--fold", type=int, required=True,
@@ -31,7 +32,7 @@ def main():
 
     print(fr"Starting training for fold {args.fold} for {args.num_epochs} epochs : ")
 
-    df_dataset = pd.read_csv('Dataset001_final_train.csv')
+    df_dataset = pd.read_csv(fr"{constants.DIR_CSV}/Dataset001_final_train.csv")
 
     # Create the model :
     model = init_baseline_model()
@@ -58,5 +59,14 @@ def main():
                          num_epochs=args.num_epochs,
                          lr=args.lr,
                          device=args.device)
+
+    print("Training started ...")
+    print(fr"The device used for training is : {args.device}")
+    trainer.train()
+
+
+if __name__ == "__main__":
+    main()
+
 
 

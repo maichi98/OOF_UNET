@@ -5,3 +5,4 @@ antspyx
 torchvision
 torchaudio
 monai
+tensorboard
