@@ -14,4 +14,4 @@ DIR_PROJECT="/home/maichi/work/my_projects/LySAIRI/OOF_UNET"
 # Run train.py :
 python "$DIR_PROJECT/oof_unet/train.py" --fold 0 --num_epochs 100 --n_units 8 --lr 0.001
 
-python "$DIR_PROJECT/oof_unet/train.py" --fold 2 --num_epochs 100 --n_units 8 --lr 0.1
+python "$DIR_PROJECT/oof_unet/train.py" --fold 2 --num_epochs 100 --n_units 8 --lr 0.001
