@@ -41,7 +41,7 @@ class OofTrainer:
         # Set up optimizer, gradient scaler, and scheduler
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         self.scaler = GradScaler()
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=30, gamma=0.1)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=5, gamma=0.1)
 
         self.dir_results = constants.DIR_RESULTS / f"fold_{fold}"
         self.dir_results.mkdir(exist_ok=True, parents=True)
@@ -52,16 +52,34 @@ class OofTrainer:
 
         self.writer = SummaryWriter(log_dir=self.dir_tensorboard_log)
 
-        # Set up the logger.
-        logging.basicConfig(filename=self.path_log,
-                            level=logging.INFO,
-                            format='%(asctime)s %(levelname)s %(message)s')
+        # Set up the logger :
+        self.logger = self._setup_logger()
 
         self.best_val_loss = float('inf')
 
         # Lists to store losses for plotting.
         self.train_losses = []
         self.val_losses = []
+
+    def _setup_logger(self):
+
+        logger = logging.getLogger("OofTrainer")
+        logger.setLevel(logging.INFO)
+
+        # Create a file handler :
+        file_handler = logging.FileHandler(self.path_log)
+        file_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+        # Create a console handler :
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+        return logger
 
     def train_epoch(self, epoch):
 
@@ -90,9 +108,7 @@ class OofTrainer:
             running_loss += loss.item()
 
         avg_loss = running_loss / len(self.train_loader)
-        msg = f"Epoch [{epoch + 1}/{self.num_epochs}] Training Loss: {avg_loss:.4f}"
-        print(msg)
-        logging.info(msg)
+        self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}] Training Loss: {avg_loss:.4f}")
 
         # clear cache
         self.clear_cache()
@@ -120,9 +136,7 @@ class OofTrainer:
                 running_loss += loss.item()
 
             avg_loss = running_loss / len(self.val_loader)
-            msg = f"Epoch [{epoch + 1}/{self.num_epochs}] Validation Loss: {avg_loss:.4f}"
-            print(msg)
-            logging.info(msg)
+            self.logger.info(f"Epoch [{epoch + 1}/{self.num_epochs}] Validation Loss: {avg_loss:.4f}")
 
             # clear cache
             self.clear_cache()
@@ -161,7 +175,7 @@ class OofTrainer:
         if self.device == 'cuda':
             mem_alloc = torch.cuda.max_memory_allocated(self.device) / 1e6  # in MB
             mem_cached = torch.cuda.max_memory_reserved(self.device) / 1e6  # in MB
-            logging.info(
+            self.logger.info(
                 f"Epoch {epoch + 1}: Max GPU Memory Allocated: {mem_alloc:.2f} MB, "
                 f"Max GPU Memory Reserved: {mem_cached:.2f} MB"
             )
@@ -174,7 +188,7 @@ class OofTrainer:
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
-            # 'scheduler_state_dict': self.scheduler.state_dict(),
+            'scheduler_state_dict': self.scheduler.state_dict(),
             'best_val_loss': self.best_val_loss,
         }
 
@@ -187,7 +201,7 @@ class OofTrainer:
 
         path = self.dir_results / filename
         torch.save(checkpoint, path)
-        logging.info(f"Saved {tag} checkpoint at epoch {epoch + 1} to {path}")
+        self.logger.info(f"Saved {tag} checkpoint at epoch {epoch + 1} to {path}")
 
     def train(self):
         for epoch in range(self.num_epochs):
@@ -196,12 +210,12 @@ class OofTrainer:
 
             # Log the current learning rate before starting the epoch.
             current_lrs = [param_group['lr'] for param_group in self.optimizer.param_groups]
-            logging.info(f"Epoch {epoch + 1}: Starting with learning rate(s): {current_lrs}")
+            self.logger.info(f"Epoch {epoch + 1}: Starting with learning rate(s): {current_lrs}")
 
             train_loss = self.train_epoch(epoch)
             val_loss = self.validate_epoch(epoch)
 
-            logging.info(f"Epooch {epoch + 1} completed in {time.time() - start_time:.2f} seconds")
+            self.logger.info(f"Epooch {epoch + 1} completed in {time.time() - start_time:.2f} seconds")
 
             # Append the losses for plotting and log GPU memory usage, etc.
             self.train_losses.append(train_loss)
@@ -217,7 +231,7 @@ class OofTrainer:
             if val_loss < self.best_val_loss:
                 self.best_val_loss = val_loss
                 self.save_checkpoint(epoch, tag="best")
-                logging.info(f"New best validation loss {val_loss:.4f} at epoch {epoch + 1}")
+                self.logger.info(f"New best validation loss {val_loss:.4f} at epoch {epoch + 1}")
 
             # Save a checkpoint every 50 epochs :
             if (epoch + 1) % 50 == 0:
@@ -235,8 +249,8 @@ class OofTrainer:
                 self.writer.add_scalar(f"LR/group_{i}", param_group['lr'], epoch)
 
             # Step the learning rate scheduler with the training loss.
-            self.scheduler.step(train_loss)
+            self.scheduler.step()
             updated_lrs = self.scheduler.get_last_lr()
-            logging.info(f"Epoch {epoch + 1}: Updated learning rate after scheduler step: {updated_lrs}")
+            self.logger.info(f"Epoch {epoch + 1}: Updated learning rate after scheduler step: {updated_lrs}")
 
         self.writer.close()

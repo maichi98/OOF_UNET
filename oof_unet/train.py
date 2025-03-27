@@ -11,6 +11,16 @@ from oof_unet.oof_trainer import OofTrainer
 from torch.utils.data import DataLoader
 from oof_unet import constants
 
+# Setup logging :
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Set up the formatter :
+console = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console.setFormatter(formatter)
+logger.addHandler(console)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="BaseLine UNet Model for OOF Prediction")
@@ -53,14 +63,12 @@ def main():
     if args.device == "cuda" and torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
     else:
-        logging.warning("CUDA is not available, falling back to CPU.")
+        logger.warning("CUDA is not available, falling back to CPU.")
         args.device = "cpu"
 
-    # Set up logging to console
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-    logging.info("Starting training with configuration : ")
-    logging.info(vars(args))
-    logging.info(f"Training for fold {args.fold} for {args.num_epochs} epochs : ")
+    logger.info("Starting training with configuration : ")
+    logger.info(vars(args))
+    logger.info(f"Training for fold {args.fold} for {args.num_epochs} epochs : ")
 
     df_dataset = pd.read_csv(fr"{constants.DIR_CSV}/Dataset001_final_train.csv")
 
@@ -90,13 +98,10 @@ def main():
                          lr=args.lr,
                          device=args.device)
 
-    logging.info("Training started ...")
-    logging.info(f"The device used for training is: {args.device}")
+    logger.info("Training started ...")
+    logger.info(f"The device used for training is: {args.device}")
     trainer.train()
 
 
 if __name__ == "__main__":
     main()
-
-
-
