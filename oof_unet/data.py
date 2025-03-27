@@ -6,6 +6,8 @@ import random
 import torch
 import ants
 
+random.seed(123)
+
 
 class OofUniqueMachineDataset(Dataset):
 
@@ -33,7 +35,7 @@ class OofUniqueMachineDataset(Dataset):
         thresh = dose.max() * 0.05
 
         in_field = (dose > thresh) * dose / 100
-        out_field = (dose <= thresh) * dose / 100
+        out_field = (dose <= thresh) * dose / 5
 
         return {
             "in_field": torch.tensor(in_field.numpy()).float(),

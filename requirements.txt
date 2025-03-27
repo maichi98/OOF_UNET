@@ -6,3 +6,5 @@ torchvision
 torchaudio
 monai
 tensorboard
+tqdm
+matplotlib
