@@ -8,3 +8,4 @@ monai
 tensorboard
 tqdm
 matplotlib
+wandb

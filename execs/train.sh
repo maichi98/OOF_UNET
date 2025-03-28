@@ -12,6 +12,8 @@ conda activate env_oof_unet
 DIR_PROJECT="/home/maichi/work/my_projects/LySAIRI/OOF_UNET"
 
 # Run train.py :
-python "$DIR_PROJECT/oof_unet/train.py" --fold 0 --num_epochs 100 --n_units 8 --lr 0.001
-
-python "$DIR_PROJECT/oof_unet/train.py" --fold 2 --num_epochs 100 --n_units 8 --lr 0.001
+python "$DIR_PROJECT/oof_unet/train_baseline_unet.py" --fold 0
+python "$DIR_PROJECT/oof_unet/train_baseline_unet.py" --fold 1
+python "$DIR_PROJECT/oof_unet/train_baseline_unet.py" --fold 2
+python "$DIR_PROJECT/oof_unet/train_baseline_unet.py" --fold 3
+python "$DIR_PROJECT/oof_unet/train_baseline_unet.py" --fold 4
